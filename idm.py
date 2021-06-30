@@ -289,3 +289,46 @@ def list_mnemonics(lasfile):
   mnemonic_dict = dict(zip(mnemonic_array, descr_array))  
 
   return mnemonic_dict, mnemonic_df
+
+#### MUD LOG DATA
+def retrieve_mud_mech(df):
+  mud_mech_df = df[["dTim.1", "mdTop", "mdBottom", "ropAv", "ropMn", "ropMx", 
+                    "wobAv", "tqAv", "rpmAv", "wtMudAv", "ecdTdAv",
+                    "type", "dxcAv"]].copy()
+
+  # Convert to Panda datetime
+  mud_mech_df["dTim.1"] = pd.to_datetime(mud_mech_df["dTim.1"], format="%Y-%m-%dT%H:%M:%S.%fZ")
+
+  # Drop Null observations
+  # mud_mech_df = mud_mech_df.dropna(subset=["dTim.1", "mdTop", "mdBottom"])
+  mud_mech_df = mud_mech_df.dropna()
+
+  # Taking median of "mdTop" and "mdBottom", put into new column "mdTop"
+  mud_mech_df["mdTop"] = (mud_mech_df["mdBottom"] + mud_mech_df["mdTop"]) / 2
+
+  # Delete "dTim"
+  mud_mech_df = mud_mech_df.drop(columns=["mdBottom"])
+
+  # Change "mdTop" and "dTim.1" column name to "md" and "time"
+  mud_mech_df = mud_mech_df.rename(columns={"mdTop": "md", "dTim.1": "time"})
+
+  # Sort "md" from smallest to highest because some values are messed up 
+  mud_mech_df = mud_mech_df.sort_values("md", axis=0, ascending=True).reset_index(drop=True)  
+  return mud_mech_df
+
+def retrieve_mud_chrom(df):
+  mud_chrom_df = df[["dTim.2", "mdBottom.2", "methAv", "methMn", "methMx", 
+                     "ethAv", "ethMn", "ethMx", "propAv", "propMn", "propMx", 
+                     "ibutAv", "ibutMn", "ibutMx", "nbutAv", "nbutMn", 
+                     "nbutMx", "ipentAv", "ipentMn", "ipentMx", "npentAv", 
+                     "npentMn", "npentMx", "gasAv", "gasPeak", "gasBackgnd"]].copy()
+
+  # Drop Null observations
+  mud_chrom_df = mud_chrom_df.dropna(subset=["dTim.2", "mdBottom.2"]).reset_index(drop=True)
+
+  # Convert to Panda datetime
+  mud_chrom_df["dTim.2"] = pd.to_datetime(mud_chrom_df["dTim.2"], format="%Y-%m-%dT%H:%M:%S.%fZ")
+
+  # Change "mdBottom.2" and "dTim.2" column name to "md" and "time"
+  mud_chrom_df = mud_chrom_df.rename(columns={"mdBottom.2": "md", "dTim.2": "time"}) 
+  return mud_chrom_df 
