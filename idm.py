@@ -11,8 +11,8 @@ from bs4 import BeautifulSoup
 import plotly.express as px
 import plotly.graph_objects as go
 import missingno as msno
-import wellpathpy as wp
-import lasio
+# import wellpathpy as wp
+# import lasio
 
 from ipywidgets import interact, interactive, fixed, interact_manual, ToggleButtons
 import ipywidgets as widgets
@@ -50,9 +50,13 @@ def open_xml_trajectory(path):
 
 def trajectory_trueNE(df, md_column, inc_column, azi_column, 
                       surface_northing, surface_easting):
+  import wellpathpy as wp
+  
   md, inc, azi = df[md_column], df[inc_column], df[azi_column]
+  
   # Calculate TVD, northing, easting, dogleg severity
   tvd, northing, easting, dls = wp.mincurve.minimum_curvature(md, inc, azi)
+  
   # Calculate true northing and easting by shifting to the wellhead loc
   tvd, new_northing, new_easting = wp.location.loc_to_wellhead(tvd, northing, easting,
                                                               surface_northing, 
