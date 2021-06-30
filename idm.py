@@ -73,8 +73,6 @@ def glob_files(folder, extension):
   return paths
 
 def open_multiple_xml_files(folder, inspect=False, selected_logs=None):
-  import lasio
-  
   # Glob files
   paths = glob_files(folder, ".xml")
 
@@ -192,6 +190,7 @@ def non_numeric_formatter(df):
 
 ##### LOGGING/MEASUREMENT-WHILE-DRILLING
 def open_multiple_las_files(folder, inspect=False):
+  import lasio  
   # Glob files
   paths = glob_files(folder, ".las")
 
