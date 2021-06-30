@@ -1,3 +1,4 @@
+from __future__ import print_function
 import glob, sys, os, subprocess
 
 import numpy as np
@@ -13,7 +14,6 @@ import missingno as msno
 import wellpathpy as wp
 import lasio
 
-from __future__ import print_function
 from ipywidgets import interact, interactive, fixed, interact_manual, ToggleButtons
 import ipywidgets as widgets
 
