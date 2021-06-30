@@ -26,6 +26,7 @@ def setup():
   pip_install('lasio')
   pip_install('wellpathpy')
 
+##### TRAJECTORY FILES
 def open_xml_trajectory(path):
   # Reading the WITSML file
   with open(path) as file:
@@ -66,6 +67,7 @@ def trajectory_trueNE(df, md_column, inc_column, azi_column,
   df["surfEw"] = new_easting
   return df
 
+##### REALTIME DRILLING FILES
 def glob_files(folder, extension):
   paths = sorted(glob.glob(os.path.join(folder, "*"+extension)))  
   return paths
@@ -185,3 +187,104 @@ def non_numeric_formatter(df):
   cols = df.columns[df.dtypes.eq('object')]
   df[cols] = df[cols].apply(pd.to_numeric, errors='coerce')
   return df  
+
+##### LOGGING/MEASUREMENT-WHILE-DRILLING
+def open_multiple_las_files(folder, inspect=False):
+  # Glob files
+  paths = glob_files(folder, ".las")
+
+  # Inspect, otherwise open
+  if inspect == True:
+    lognames_list, descr_list, unit_list = [], [], []
+    for i in range(len(paths)):
+      # Reading the LAS file
+      data = lasio.read(paths[i])
+      
+      # Log names
+      lognames = [data.curves[i].mnemonic for i in range(len(data.curves))]
+      # descr = [data.curves[i].descr for i in range(len(data.curves))]
+      # unit = [data.curves[i].unit for i in range(len(data.curves))]
+
+      lognames_list.append(lognames)  
+      # descr_list.append(descr)
+      # unit_list.append(unit)  
+
+      # Print how many mnemonics/columns each dataframe has
+      print("Dataframe {} has {} mnemonics".format(i+1, len(lognames)))
+
+    all_lognames = np.concatenate(lognames_list, axis=0)
+    all_lognames = np.unique(all_lognames)
+
+    # all_descr = np.concatenate(descr_list, axis=0)
+    # all_descr = np.unique(all_descr)
+
+    # all_unit = np.concatenate(unit_list, axis=0)
+    # all_unit = np.unique(all_unit)        
+
+    # Check the availability of each mnemonic in each dataframes
+    availability = []
+    for i in all_lognames:
+      avail_per_df = []
+      for j in lognames_list:
+        avail = np.any(np.array(j) == i)
+        avail_per_df.append(avail)
+
+      availability.append(avail_per_df)
+    
+    # Create availability dataframe
+    columns = np.arange(1,len(paths)+1).astype(str)
+    avail_df = pd.DataFrame(availability, columns=columns, index=all_lognames)
+
+    # List mnemonics
+    # avail_df['Unit'] = all_unit
+    # avail_df['Description'] = all_descr
+
+    # Identify which mnemonics are available in all dataframes
+    available = avail_df.all(axis=1).values
+    available = all_lognames[available]
+    print("\n")
+    print("Mnemonics exists in ALL dataframes:")
+    print(*('"{}"'.format(item) for item in available), sep=', ')    
+
+    # Print the availability dataframe
+    pd.set_option("display.max_rows", None, "display.max_columns", None)
+    print(avail_df)
+
+  else:
+    # Inspect=False, open the file with selected log names   
+    dataframes = []
+    for i in range(len(paths)):
+      # Reading the LAS file
+      data = lasio.read(paths[i])
+      df = data.df().reset_index() 
+
+      # Subset of dataframe
+      # df = df[selected_logs]     
+
+      # Append all dataframes
+      dataframes.append(df)
+
+    # Concatenate all individual dataframes
+    df = pd.concat(dataframes, axis=0).reset_index(drop=True)
+
+    # Replace blank values with nan
+    df = df.replace('', np.NaN)    
+  
+    return df
+
+def list_mnemonics(lasfile):
+  """
+  List all available mnemonics and descriptions. 
+  Outputs are in dictionary and dataframe
+  """
+  mnemonic_array, descr_array = [], []
+  for i in range(len(lasfile.curves[:])):
+    mnemonic = lasfile.curves[i].mnemonic
+    descr = lasfile.curves[i].descr
+    mnemonic_array.append(mnemonic)
+    descr_array.append(descr)
+
+  # Create into dictionary
+  mnemonic_dict = dict(zip(mnemonic_array, descr_array))  
+
+  return mnemonic_dict, mnemonic_df
