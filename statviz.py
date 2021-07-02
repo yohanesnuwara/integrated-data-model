@@ -228,3 +228,31 @@ def compute_proba_2d(df, x, y, xrange, yrange):
   Pxy_cond = Pxny / Px
 
   return Px, Py, Pxny, Pxy_cond
+
+def visualize_data_on_trajectory(df, x, y, z, time, features, hover=None):
+  """
+  Visualize Log data on Trajectory
+
+  INPUT. df: The merged dataframe that contains x (true Easting), y (true Northing),
+  z (TVD), features (logs), and time (datetime in realtime)
+
+  OPTIONAL INPUT. hover: if you want to track log information on the trajectory.
+  Specify what features to hover. Default is None.  
+  """
+  # Convert datetime to string and add new column. This is for hovering data.
+  df[time] = df[time].astype(str)
+
+  if hover!=None:
+    hover = [time] + hover
+
+  if hover==None:
+    hover = [time]
+  
+  @interact
+  def f(color_by=features):
+    fig = px.scatter_3d(df, x=x, y=y, z=z,
+                        color=color_by, hover_data=hover,
+                        width=900)
+    # fig.add_traces(px.line_3d(df, x=x, y=y, z=z))
+    fig.update_scenes(zaxis_autorange="reversed")
+    fig.show()    
